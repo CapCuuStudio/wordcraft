@@ -1,0 +1,53 @@
+name: LUNOR Writer · Publish experimental browser preview
+
+on:
+  push:
+    branches:
+      - feat/lunor-writer-web
+    paths:
+      - ".github/workflows/lunor-writer-preview.yml"
+  workflow_dispatch:
+
+# This workflow publishes a SEPARATE experimental GitHub Pages site.
+# It does not publish to the LUNOR OS website or release a production app.
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish-browser-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out source branch
+        uses: actions/checkout@v4
+
+      - name: Fetch most recent successful real WebAssembly build
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          RUN_ID="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow lunor-writer-web.yml --branch feat/lunor-writer-web --status success --limit 1 --json databaseId --jq '.[0].databaseId')"
+          if [[ -z "$RUN_ID" || "$RUN_ID" == "null" ]]; then
+            echo "No successful LUNOR Writer WASM build is available."
+            exit 1
+          fi
+          mkdir -p preview/lunor-writer
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" -n lunor-writer-web-preview -D preview/lunor-writer
+          test -s preview/lunor-writer/index.html
+          find preview/lunor-writer -name '*.wasm' -type f | grep -q .
+          echo "Publishing experimental preview from build $RUN_ID"
+
+      - name: Disable Jekyll for WebAssembly assets
+        run: touch preview/.nojekyll
+
+      - name: Publish preview files to separate gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./preview
+          keep_files: true
+          enable_jekyll: false
+          commit_message: "preview: deploy experimental LUNOR Writer WASM bundle"

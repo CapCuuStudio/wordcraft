@@ -1,0 +1,145 @@
+name: LUNOR Apps · Build 11 additional real web editors
+on:
+  push:
+    branches: [feat/lunor-writer-web]
+    paths: ['.github/workflows/lunor-apps-web-build.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: lunor-apps-web-build
+  cancel-in-progress: false
+jobs:
+  build:
+    name: WebAssembly · ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include:
+          - { app: figcraft,       slug: design, type: trunk }
+          - { app: photocraft,     slug: photo,  type: trunk }
+          - { app: effectcraft,    slug: motion, type: xtask }
+          - { app: filmcraft,      slug: video,  type: xtask }
+          - { app: designcraft,    slug: layout, type: trunk }
+          - { app: lightcraft,     slug: raw,    type: xtask }
+          - { app: soundcraft,     slug: audio,  type: trunk }
+          - { app: gridcraft,      slug: sheets, type: trunk }
+          - { app: deckcraft,      slug: slides, type: trunk }
+          - { app: pdfcraft,       slug: pdf,    type: trunk }
+          - { app: vectorcraft,    slug: vector,type: trunk }
+    steps:
+      - name: Checkout upstream-preserving CapCuuStudio source
+        uses: actions/checkout@v4
+        with:
+          repository: CapCuuStudio/${{ matrix.app }}
+          ref: lunor-dev
+          path: source
+      - name: Install Rust and WASM compilation target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Cache Rust dependencies for this app
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: source -> target
+          key: lunor-app-${{ matrix.app }}
+      - name: Install Trunk (for Trunk-based apps)
+        if: matrix.type == 'trunk'
+        uses: taiki-e/install-action@v2
+        with:
+          tool: trunk
+      - name: Install matching wasm-bindgen CLI (for xtask-based apps)
+        if: matrix.type == 'xtask'
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=$(python3 - <<'PY'
+          import tomllib
+          with open('Cargo.lock', 'rb') as f:
+              packages = tomllib.load(f)['package']
+          versions = [p['version'] for p in packages if p['name'] == 'wasm-bindgen']
+          if len(versions) != 1:
+              raise SystemExit('Cannot resolve unique wasm-bindgen version')
+          print(versions[0])
+          PY
+          )
+          cargo install wasm-bindgen-cli --version "$VERSION" --locked
+      - name: Build the real Craft app as WebAssembly
+        working-directory: source
+        shell: bash
+        env:
+          APP: ${{ matrix.app }}
+          TYPE: ${{ matrix.type }}
+        run: |
+          set -euo pipefail
+          if [[ "$TYPE" == "trunk" ]]; then
+            (cd "apps/${APP}-web" && trunk build --release)
+            SITE="dist/web"
+          elif [[ "$APP" == "lightcraft" ]]; then
+            cargo xtask web
+            SITE="target/web-site"
+          else
+            cargo xtask web
+            SITE="target/web/dist"
+          fi
+          test -s "$SITE/index.html"
+          find "$SITE" -name '*.wasm' -type f | grep -q .
+          mkdir -p "$GITHUB_WORKSPACE/app-preview"
+          cp -a "$SITE"/. "$GITHUB_WORKSPACE/app-preview/"
+          touch "$GITHUB_WORKSPACE/app-preview/.nojekyll"
+          echo "Real ${APP} WebAssembly build ready"
+      - name: Save this app's preview bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: lunor-app-${{ matrix.slug }}
+          path: app-preview/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+  publish:
+    name: Publish successful apps to the EXISTING LUNOR GitHub Pages preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: build
+    if: always()
+    steps:
+      - name: Download all successfully built apps
+        uses: actions/download-artifact@v4
+        with:
+          pattern: lunor-app-*
+          path: downloaded
+          merge-multiple: false
+      - name: Verify and arrange previews
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p preview
+          count=0
+          for appdir in downloaded/lunor-app-*; do
+            [[ -d "$appdir" ]] || continue
+            app="${appdir##*/lunor-app-}"
+            test -s "$appdir/index.html"
+            find "$appdir" -name '*.wasm' -type f | grep -q .
+            mkdir -p "preview/lunor-$app"
+            cp -a "$appdir"/. "preview/lunor-$app/"
+            count=$((count+1))
+          done
+          if [[ $count -eq 0 ]]; then
+            echo "No successful WebAssembly apps to publish" >&2
+            exit 1
+          fi
+          touch preview/.nojekyll
+          echo "Publishing $count successful app previews"
+      - name: Keep existing Writer preview; publish all successful apps
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./preview
+          keep_files: true
+          enable_jekyll: false
+          commit_message: "preview: add verified LUNOR App Center WebAssembly bundles"
