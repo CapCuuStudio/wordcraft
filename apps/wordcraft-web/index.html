@@ -8,6 +8,7 @@
   <title>LUNOR Writer · Bản thử nghiệm</title>
   <!-- Use the same LUNOR mark as LUNOR OS, copied from the website source. -->
   <link data-trunk rel="icon" type="image/png" href="lunor-icon.png" />
+  <link data-trunk rel="copy-file" href="lunor-icon.png" />
   <!-- Keep the original Rust/WASM application entrypoint unchanged. -->
   <link data-trunk rel="rust" data-bin="wordcraft-web" data-wasm-opt="z" data-weak-refs />
   <style>
@@ -32,7 +33,7 @@
 <body>
   <canvas id="wordcraft_canvas"></canvas>
   <div id="wordcraft_loading" role="status" aria-live="polite">
-    <img data-trunk src="lunor-icon.png" alt="LUNOR">
+    <img src="lunor-icon.png" alt="LUNOR">
     <strong>LUNOR Writer</strong>
     <span class="loading-message">Đang khởi động trình soạn thảo WebAssembly…</span>
     <small>Phiên bản thử nghiệm dựa trên WordCraft mã nguồn mở. Chưa phải bản phát hành chính thức của LUNOR OS.</small>
