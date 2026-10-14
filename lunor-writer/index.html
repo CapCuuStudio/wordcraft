@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#070e1c">
+  <meta name="description" content="LUNOR Writer — trình soạn thảo dựa trên mã nguồn mở WordCraft. Phiên bản WebAssembly thử nghiệm.">
+  <title>LUNOR Writer · Bản thử nghiệm</title>
+  <!-- Use the same LUNOR mark as LUNOR OS, copied from the website source. -->
+  <link rel="icon" href="./lunor-icon-c03f359fc0921797.png" integrity="sha384-r7b7bJh/3w4+/s9I2vtQ1nRWfaXJQfAYpxrlx7e8qgPa9Kh3TpIiz2uI2XycmW9r"/>
+  
+  <!-- Keep the original Rust/WASM application entrypoint unchanged. -->
+  
+<script type="module">
+import init, * as bindings from './wordcraft-web-1b5f6a1319f285d4.js';
+const wasm = await init({ module_or_path: './wordcraft-web-1b5f6a1319f285d4_bg.wasm' });
+
+
+window.wasmBindings = bindings;
+
+
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
+
+</script>
+  <style>
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #070e1c; }
+    #wordcraft_canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    #wordcraft_loading {
+      position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 14px; padding: 24px; text-align: center;
+      background: radial-gradient(ellipse at 50% 30%, #102444 0%, #070e1c 60%, #02050a 100%);
+      color: #f5f8ff; font: 14px system-ui, sans-serif; pointer-events: none;
+    }
+    #wordcraft_loading img { width: 72px; height: 72px; object-fit: contain; filter: drop-shadow(0 0 24px #9ec9ff45); }
+    #wordcraft_loading strong { font-size: 23px; letter-spacing: 0.025em; }
+    #wordcraft_loading .loading-message { color: #a9bfdc; line-height: 1.6; }
+    #wordcraft_loading small { color: #829bb9; max-width: 460px; line-height: 1.5; }
+    @media (prefers-reduced-motion: no-preference) {
+      #wordcraft_loading img { animation: lunor-pulse 2.8s ease-in-out infinite; }
+      @keyframes lunor-pulse { 50% { transform: scale(1.045); filter: drop-shadow(0 0 34px #9ec9ff80); } }
+    }
+  </style>
+<link rel="modulepreload" href="./wordcraft-web-1b5f6a1319f285d4.js" crossorigin="anonymous" integrity="sha384-kvda2bhdhxqLFHtCVuOiul0daobVKYWGI0vHqZ95b4gvFhPtBXbHdje7OYiNq2B4"><link rel="preload" href="./wordcraft-web-1b5f6a1319f285d4_bg.wasm" crossorigin="anonymous" integrity="sha384-k6gxv0YLdI5Y0iLYyZTUhl9YzGu6qsh8R04+jgMppsRGNWoupMYJUATNH4Fej8Hh" as="fetch" type="application/wasm"></head>
+<body>
+  <canvas id="wordcraft_canvas"></canvas>
+  <div id="wordcraft_loading" role="status" aria-live="polite">
+    <img src="lunor-icon.png" alt="LUNOR">
+    <strong>LUNOR Writer</strong>
+    <span class="loading-message">Đang khởi động trình soạn thảo WebAssembly…</span>
+    <small>Phiên bản thử nghiệm dựa trên WordCraft mã nguồn mở. Chưa phải bản phát hành chính thức của LUNOR OS.</small>
+  </div>
+</body>
+</html>
