@@ -1,0 +1,70 @@
+name: LUNOR Writer · Build real WebAssembly app
+
+on:
+  push:
+    branches:
+      - feat/lunor-writer-web
+    paths:
+      - "apps/wordcraft-web/**"
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/lunor-writer-web.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lunor-writer-web-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - name: Checkout LUNOR Writer sources
+        uses: actions/checkout@v4
+
+      - name: Install Rust with WebAssembly target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ". -> target"
+
+      - name: Install Trunk WebAssembly bundler
+        uses: taiki-e/install-action@v2
+        with:
+          tool: trunk
+
+      - name: Build the actual WordCraft WebAssembly editor
+        working-directory: apps/wordcraft-web
+        run: trunk build --release
+
+      - name: Verify browser app output
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/web/index.html
+          grep -q 'LUNOR Writer' dist/web/index.html
+          test -s dist/web/lunor-icon.png
+          mapfile -t wasm_files < <(find dist/web -type f -name '*.wasm')
+          if [ "${#wasm_files[@]}" -eq 0 ]; then
+            echo "ERROR: Trunk produced no WebAssembly binary."
+            exit 1
+          fi
+          echo "Built LUNOR Writer browser application"
+          ls -lh dist/web | head -35
+
+      - name: Upload preview package (not published)
+        uses: actions/upload-artifact@v4
+        with:
+          name: lunor-writer-web-preview
+          path: dist/web/
+          if-no-files-found: error
+          retention-days: 7
