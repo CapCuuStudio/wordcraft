@@ -1,16 +1,7 @@
 name: LUNOR QA · 12 browser smoke checks
 
 on:
-  push:
-    branches: [feat/lunor-qa-stage-1]
-    paths:
-      - ".github/workflows/lunor-qa-stage-1.yml"
-      - "tests/lunor-qa/**"
-  pull_request:
-    branches: [feat/lunor-writer-web]
-    paths:
-      - ".github/workflows/lunor-qa-stage-1.yml"
-      - "tests/lunor-qa/**"
+  workflow_call:
   workflow_dispatch:
 
 permissions:
