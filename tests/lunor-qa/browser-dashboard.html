@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>LUNOR QA · Kiểm thử 12 ứng dụng</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#eaf0ff;background:#070d19;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0;line-height:1.5}main{max-width:1190px;margin:0 auto;padding:24px 18px 56px}
+header{display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap;border-bottom:1px solid #283650;padding-bottom:20px}
+h1{font-size:clamp(24px,4vw,38px);margin:5px 0}h2{font-size:18px}
+.eyebrow{color:#92b5ff;font-size:12px;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
+p{color:#aebed8;max-width:80ch}.panel{margin-top:22px;background:#101b2f;border:1px solid #293956;border-radius:16px;padding:20px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+button,.download{border-radius:9px;border:1px solid #6c8dc7;background:#a2c6ff;color:#061124;padding:11px 16px;font-weight:750;cursor:pointer;font:inherit}
+button.secondary,.download{color:#d6e7ff;background:#182a48}
+button:disabled{cursor:not-allowed;opacity:.45}
+a{color:#aaceff}a:hover{text-decoration:underline}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}
+.stat{background:#071326;border:1px solid #304460;border-radius:12px;padding:14px}
+.stat b{font-size:23px;display:block}.stat span{font-size:11px;color:#b1c0d9}
+table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:11px 8px;border-bottom:1px solid #263955;vertical-align:top}th{color:#a5b9d9;font-weight:650}
+.pass{color:#89e5b8}.fail{color:#ffa29e}.pending{color:#f5ce8e}.unverified{color:#b2c1d7}
+#log{max-height:190px;overflow:auto;font-size:12px;white-space:pre-wrap;background:#071326;border-radius:8px;padding:12px;color:#a7d2ff}
+#test-frame{width:100%;height:min(64vh,680px);border:1px solid #385477;border-radius:12px;background:#080e18}
+details{color:#b8c9e3}summary{cursor:pointer}.small{font-size:12px}
+@media(max-width:680px){.stats{grid-template-columns:repeat(2,1fr)}.overflow{overflow-x:auto}th,td{min-width:110px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+ <div><span class="eyebrow">LUNOR Apps · Quality Assurance / Stage 1</span><h1>Kiểm thử ứng dụng</h1><p>Kiểm tra 12 phiên bản WebAssembly thật trên trình duyệt của bạn. Không sử dụng CMD, không đăng nhập và không gửi dữ liệu kiểm thử về máy chủ.</p></div>
+ <a href="https://feat-lunor-app-center.lunor-web.pages.dev/kho-ung-dung.html">← Quay lại LUNOR App Center</a>
+</header>
+<section class="panel">
+ <h2>Kiểm tra tự động trên trình duyệt</h2>
+ <p>Mỗi ứng dụng được khởi động độc lập để kiểm tra HTML, sự kiện WebAssembly, kích thước canvas và màn hình tải. Lần đầu có thể chậm do bộ WASM khá lớn. <strong>Đạt khởi động không đồng nghĩa đã kiểm thử lưu/mở lại tệp.</strong></p>
+ <div class="controls">
+  <button id="office">Kiểm tra 4 ứng dụng văn phòng</button>
+  <button id="all" class="secondary">Kiểm tra cả 12</button>
+  <button id="stop" class="secondary" disabled>Dừng</button>
+  <button id="export" class="secondary" disabled>Tải báo cáo JSON ↓</button>
+ </div>
+ <div class="stats">
+  <div class="stat"><b id="s-pass">0</b><span>KHỞI ĐỘNG ĐẠT</span></div>
+  <div class="stat"><b id="s-fail">0</b><span>LỖI ĐƯỢC QUAN SÁT</span></div>
+  <div class="stat"><b id="s-blocked">0</b><span>BỊ CHẶN / TIMEOUT</span></div>
+  <div class="stat"><b id="s-remaining">12</b><span>CHƯA KIỂM TRA</span></div>
+ </div>
+ <div class="overflow"><table><thead><tr><th>Ứng dụng</th><th>Khởi động</th><th>Lưu/mở lại file</th><th>Chi tiết</th></tr></thead><tbody id="results"></tbody></table></div>
+ <h2>Nhật ký kiểm thử</h2><pre id="log" aria-live="polite">Sẵn sàng. Chọn nhóm cần kiểm tra.</pre>
+</section>
+<section class="panel">
+ <h2>Khung ứng dụng đang kiểm tra</h2>
+ <p id="current">Chưa mở ứng dụng nào.</p>
+ <iframe id="test-frame" title="Ứng dụng WebAssembly đang kiểm tra" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+</section>
+<section class="panel">
+ <h2>Kiểm thử chức năng — vẫn cần nghiệm thu</h2>
+ <p>Trên giao diện egui/canvas, kiểm thử khởi động không chứng minh chất lượng tác vụ. Dùng danh sách này để thực hiện thủ công và đính kèm kết quả vào Pull Request QA, không dùng dữ liệu cá nhân.</p>
+ <div id="checklist"></div>
+ <p class="small">Báo cáo tự động luôn giữ chức năng lưu/mở lại ở trạng thái NOT_TESTED. Không được tự chuyển thành PASS chỉ từ ảnh hoặc sự kiện tải WASM.</p>
+ <p><a href="https://github.com/CapCuuStudio/wordcraft/pull/2">Xem Pull Request LUNOR QA #2</a></p>
+</section>
+</main>
+<script>
+"use strict";
+const apps = [
+{slug:"photo",name:"LUNOR Photo",boot:"trunk",canvas:"photocraft_canvas",work:"Mở PNG/PSD → layer/mask → lưu/xuất → mở lại"},
+{slug:"video",name:"LUNOR Video",boot:"filmcraft",canvas:"filmcraft_canvas",work:"Nhập MP4 → cắt và phát → xuất → đối chiếu"},
+{slug:"design",name:"LUNOR Design",boot:"trunk",canvas:"figcraft_canvas",work:"Frame/component → lưu và mở lại → xuất SVG"},
+{slug:"motion",name:"LUNOR Motion",boot:"effectcraft",canvas:"effectcraft_canvas",work:"Composition/keyframe → preview → render"},
+{slug:"layout",name:"LUNOR Layout",boot:"trunk",canvas:"designcraft_canvas",work:"Dàn trang → xuất PDF → so sánh các trang"},
+{slug:"writer",name:"LUNOR Writer",boot:"trunk",canvas:"wordcraft_canvas",work:"Soạn tiếng Việt → lưu DOCX → mở lại → so sánh"},
+{slug:"raw",name:"LUNOR RAW",boot:"lightcraft",canvas:"lightcraft_canvas",work:"Mở DNG → chỉnh không phá hủy → xuất JPG"},
+{slug:"audio",name:"LUNOR Audio",boot:"trunk",canvas:"soundcraft_canvas",work:"Nhập WAV → edit track → xuất và so sánh"},
+{slug:"sheets",name:"LUNOR Sheets",boot:"trunk",canvas:"gridcraft_canvas",work:"Nhập công thức → lưu XLSX → mở lại → đối chiếu"},
+{slug:"slides",name:"LUNOR Slides",boot:"trunk",canvas:"deckcraft_canvas",work:"Slide+ảnh → lưu PPTX → mở lại → đối chiếu"},
+{slug:"pdf",name:"LUNOR PDF",boot:"trunk",canvas:"pdfcraft",work:"Mở PDF → chú thích → lưu → mở lại"},
+{slug:"vector",name:"LUNOR Vector",boot:"trunk",canvas:"vectorcraft_canvas",work:"Vẽ path → xuất SVG → nhập lại"}
+];
+const byId=id=>document.getElementById(id);
+const results = {};
+let abort = false, running = false;
+function writeLog(msg) {
+ const l=byId("log");l.textContent += "\n" + new Date().toLocaleTimeString("vi-VN") + " " + msg;l.scrollTop=l.scrollHeight;
+}
+const label=s=>s==="PASS"?"ĐẠT":s==="FAIL"?"LỖI":s==="BLOCKED"?"CHƯA KIỂM CHỨNG":"CHƯA KIỂM TRA";
+const cssStatus=s=>s==="PASS"?"pass":s==="FAIL"?"fail":s==="BLOCKED"?"pending":"unverified";
+function refresh(){
+ const body=byId("results");body.replaceChildren();
+ for(const app of apps){
+  const r=results[app.slug]||{},row=document.createElement("tr");
+  const arr=[app.name,r.status||"NOT_TESTED","NOT_TESTED",r.detail||"Chưa có kết quả"];
+  arr.forEach((value,i)=>{
+   const cell=document.createElement("td");
+   cell.textContent=i===1?label(value):i===2?"Chưa xác minh":value;
+   if(i===1)cell.className=cssStatus(value);
+   row.appendChild(cell);
+  });body.appendChild(row);
+ }
+ for(const [key,n] of [["pass","PASS"],["fail","FAIL"],["blocked","BLOCKED"]])byId("s-"+key).textContent=apps.filter(a=>results[a.slug]?.status===n).length;
+ byId("s-remaining").textContent=apps.filter(a=>!results[a.slug]).length;
+ byId("export").disabled=!Object.keys(results).length;
+}
+function inspect(win,app){
+ let canvas,cs,loader;
+ try {
+  canvas=win.document.getElementById(app.canvas);
+  const rc=canvas?.getBoundingClientRect();
+  const loadId=app.slug==="video"||app.slug==="motion"?"loading":app.slug==="pdf"?null:app.canvas.replace("_canvas","_loading");
+  loader=loadId?win.document.getElementById(loadId):null;
+  const style=loader&&win.getComputedStyle(loader),rect=loader?.getBoundingClientRect();
+  const loadingVisible=!!loader&&loader.isConnected&&style.display!=="none"&&style.visibility!=="hidden"&&Number(style.opacity)>0.05&&rect.width>3&&rect.height>3;
+  const started=app.boot==="trunk"?!!win.wasmBindings:app.boot==="filmcraft"?!!win.filmcraftLoad?.readyMs:app.boot==="effectcraft"?!!win.effectcraftLoad?.readyMs:typeof win.lightcraft?.command==="function";
+  const fatal=app.boot==="filmcraft"?(win.filmcraftLoad?.fatal||win.filmcraftLoad?.error):app.boot==="effectcraft"?win.effectcraftLoad?.error:null;
+  const sized=(canvas?.width||0)>20&&(canvas?.height||0)>20&&rc?.width>200&&rc?.height>200;
+  return{started,sized,loadingVisible,fatal:fatal?String(fatal).slice(0,240):null,canvas:{width:canvas?.width||0,height:canvas?.height||0},title:win.document.title};
+ }catch(e){return{error:String(e).slice(0,240)}}
+}
+function once(el,event,ms){
+ return new Promise((resolve,reject)=>{
+  const t=setTimeout(()=>{cleanup();reject(new Error("Chờ trang "+event+" quá "+ms+" ms"));},ms);
+  const fn=()=>{cleanup();resolve()};
+  const cleanup=()=>{clearTimeout(t);el.removeEventListener(event,fn)};
+  el.addEventListener(event,fn,{once:true});
+ });
+}
+function delay(ms){return new Promise(r=>setTimeout(r,ms))}
+async function checkApp(app){
+ const url=new URL("../lunor-"+app.slug+"/",location.href);
+ byId("current").textContent="Đang kiểm tra "+app.name+" — "+url.href;
+ writeLog("Bắt đầu "+app.name);
+ const row={name:app.name,url:url.href,at:new Date().toISOString(),status:"BLOCKED",functional:"NOT_TESTED",details:[],detail:"Đang tải"};
+ results[app.slug]=row;refresh();
+ if(url.origin!==location.origin){row.detail="Khác origin, không thể kiểm tra nội bộ";return row}
+ let response;
+ try{response=await fetch(url.href,{method:"HEAD",cache:"no-store",signal:AbortSignal.timeout(16000)});row.httpStatus=response.status}
+ catch(e){row.detail="Không kết nối được: "+e.message;return row}
+ if(!response.ok){row.status="FAIL";row.detail="HTTP "+response.status;return row}
+ const iframe=byId("test-frame");
+ iframe.removeAttribute("src");iframe.src="about:blank";await delay(110);
+ const loadWait=once(iframe,"load",30000).catch(e=>e);
+ iframe.src=url.href;
+ const loaded=await loadWait;
+ if(loaded instanceof Error){row.detail="Trang không hoàn thành tải: "+loaded.message;return row}
+ const startTime=Date.now(),timeout=110000;
+ let last={};
+ while(Date.now()-startTime<timeout){
+  if(abort){row.status="BLOCKED";row.detail="Người dùng đã dừng";return row}
+  try{last=inspect(iframe.contentWindow,app)}
+  catch(e){last={error:String(e)}}
+  if(last.fatal){row.status="FAIL";row.detail="Ứng dụng báo lỗi nghiêm trọng: "+last.fatal;row.evidence=last;return row}
+  if(last.started&&last.sized&&!last.loadingVisible){
+   await delay(1200);
+   const confirm=inspect(iframe.contentWindow,app);
+   if(confirm.started&&confirm.sized&&!confirm.loadingVisible&&!confirm.fatal){
+    row.status="PASS";row.detail="Đã quan sát WASM sẵn sàng, canvas đã hiển thị, không còn splash";row.evidence=confirm;
+    return row
+   }
+  }
+  await delay(1500);
+ }
+ row.status="BLOCKED";row.detail="Hết "+Math.round(timeout/1000)+" giây, chưa xác minh trạng thái boot. Có thể do mạng chậm, trình duyệt/GPU, hoặc ứng dụng lỗi.";
+ row.evidence=last;return row;
+}
+async function run(targets){
+ if(running)return;running=true;abort=false;
+ for(const id of ["office","all"])byId(id).disabled=true;
+ byId("stop").disabled=false;
+ writeLog("Bắt đầu phiên "+targets.length+" ứng dụng; không truy cập dữ liệu của người dùng.");
+ for(const app of targets){
+  if(abort)break;
+  try{const row=await checkApp(app);writeLog(app.name+": "+row.status+" — "+row.detail)}
+  catch(e){results[app.slug]={status:"FAIL",functional:"NOT_TESTED",detail:"Bộ kiểm thử lỗi: "+String(e)};writeLog(app.name+": lỗi test "+e)}
+  refresh();await delay(200);
+ }
+ byId("test-frame").src="about:blank";
+ running=false;for(const id of ["office","all"])byId(id).disabled=false;
+ byId("stop").disabled=true;
+ writeLog("Kết thúc phiên. Bạn có thể tải JSON làm bằng chứng. Lưu/mở tệp chưa được tự động kiểm thử.");
+}
+byId("office").onclick=()=>run(apps.filter(a=>["writer","sheets","slides","pdf"].includes(a.slug)));
+byId("all").onclick=()=>run(apps);
+byId("stop").onclick=()=>{abort=true;byId("test-frame").src="about:blank";writeLog("Đã yêu cầu dừng.")};
+byId("export").onclick=()=>{
+ const payload={schema:1,tool:"LUNOR QA browser dashboard",source:location.href,timestamp:new Date().toISOString(),userAgent:navigator.userAgent,
+  reminder:"PASS means startup only, never document roundtrip",results:apps.map(a=>({app:a.slug, ...(results[a.slug]||{status:"NOT_TESTED",functional:"NOT_TESTED"})}))};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="lunor-qa-browser-report.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+byId("checklist").innerHTML=apps.map(a=>'<p><strong>'+a.name+'</strong> — '+a.work+'</p>').join("");
+refresh();
+</script>
+</body>
+</html>
