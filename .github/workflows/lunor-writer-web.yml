@@ -4,12 +4,15 @@ on:
   push:
     branches:
       - feat/lunor-writer-web
+      - feat/lunor-qa-stage-1
     paths:
       - "apps/wordcraft-web/**"
       - "crates/**"
       - "Cargo.toml"
       - "Cargo.lock"
       - ".github/workflows/lunor-writer-web.yml"
+      - ".github/workflows/lunor-qa-stage-1.yml"
+      - "tests/lunor-qa/**"
   workflow_dispatch:
 
 permissions:
@@ -20,7 +23,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  qa-stage-1:
+    if: github.ref == 'refs/heads/feat/lunor-qa-stage-1'
+    uses: ./.github/workflows/lunor-qa-stage-1.yml
+
   build-web:
+    if: github.ref != 'refs/heads/feat/lunor-qa-stage-1'
     runs-on: ubuntu-latest
     timeout-minutes: 55
     steps:

@@ -1,0 +1,74 @@
+name: LUNOR QA · 12 browser smoke checks
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lunor-qa-stage1-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  chromium-smoke:
+    name: Test ${{ matrix.app }} (Chromium / WASM)
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        app: [photo, video, design, motion, layout, writer, raw, audio, sheets, slides, pdf, vector]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/lunor-qa-stage-1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install test runner (without modifying the app)
+        run: npm install --no-save --no-package-lock playwright@1.56.1
+      - name: Install Chromium for browser test
+        run: npx playwright install --with-deps chromium
+      - name: Test deployed WebAssembly application
+        env:
+          LUNOR_QA_APP: ${{ matrix.app }}
+        run: node tests/lunor-qa/run.cjs
+      - name: Keep per-app screenshots and results even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lunor-qa-${{ matrix.app }}
+          path: qa-output/${{ matrix.app }}/
+          if-no-files-found: warn
+          retention-days: 14
+
+  aggregate-report:
+    name: Summarize all 12 apps, including failures
+    needs: chromium-smoke
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/lunor-qa-stage-1
+      - name: Download smoke-test artifacts
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: lunor-qa-*
+          path: qa-results
+          merge-multiple: false
+      - name: Create the official QA stage-1 evidence report
+        run: node tests/lunor-qa/aggregate.cjs
+      - name: Save the summary for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lunor-qa-stage-1-report
+          path: qa-report/
+          if-no-files-found: warn
+          retention-days: 14

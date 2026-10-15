@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "tested_origin": "https://capcuustudio.github.io/wordcraft",
+  "apps": [
+    {"slug":"photo","name":"LUNOR Photo","upstream":"photocraft","canvas":"photocraft_canvas","boot":"trunk","sample":"PNG, PSD","critical":"Mở PNG, thêm layer, xuất PNG, lưu và mở PSD"},
+    {"slug":"video","name":"LUNOR Video","upstream":"filmcraft","canvas":"filmcraft_canvas","boot":"filmcraft","sample":"MP4","critical":"Nhập video, cắt timeline, phát preview, xuất video"},
+    {"slug":"design","name":"LUNOR Design","upstream":"figcraft","canvas":"figcraft_canvas","boot":"trunk","sample":"SVG","critical":"Vẽ frame + component, chỉnh văn bản, xuất SVG, thử mở .fig"},
+    {"slug":"motion","name":"LUNOR Motion","upstream":"effectcraft","canvas":"effectcraft_canvas","boot":"effectcraft","sample":"PNG, MP4","critical":"Tạo composition, keyframe, preview và kết xuất"},
+    {"slug":"layout","name":"LUNOR Layout","upstream":"designcraft","canvas":"designcraft_canvas","boot":"trunk","sample":"PDF","critical":"Dàn trang nhiều trang, thêm văn bản, xuất PDF"},
+    {"slug":"writer","name":"LUNOR Writer","upstream":"wordcraft","canvas":"wordcraft_canvas","boot":"trunk","sample":"DOCX","critical":"Gõ tiếng Việt, định dạng, lưu DOCX, mở lại không mất dữ liệu"},
+    {"slug":"raw","name":"LUNOR RAW","upstream":"lightcraft","canvas":"lightcraft_canvas","boot":"lightcraft","sample":"DNG, JPG","critical":"Nhập DNG, chỉnh sửa không phá hủy, xuất JPG"},
+    {"slug":"audio","name":"LUNOR Audio","upstream":"soundcraft","canvas":"soundcraft_canvas","boot":"trunk","sample":"WAV","critical":"Nhập WAV, cắt track, phát lại và xuất WAV"},
+    {"slug":"sheets","name":"LUNOR Sheets","upstream":"gridcraft","canvas":"gridcraft_canvas","boot":"trunk","sample":"XLSX","critical":"Nhập dữ liệu và công thức, lưu XLSX, mở lại so sánh"},
+    {"slug":"slides","name":"LUNOR Slides","upstream":"deckcraft","canvas":"deckcraft_canvas","boot":"trunk","sample":"PPTX","critical":"Tạo slide, chèn ảnh và text, lưu PPTX, mở lại"},
+    {"slug":"pdf","name":"LUNOR PDF","upstream":"pdfcraft","canvas":"pdfcraft","boot":"trunk","sample":"PDF","critical":"Mở PDF, chú thích, lưu bản sao, mở lại"},
+    {"slug":"vector","name":"LUNOR Vector","upstream":"vectorcraft","canvas":"vectorcraft_canvas","boot":"trunk","sample":"SVG","critical":"Tạo path, đổi fill, xuất SVG, mở lại"}
+  ]
+}
