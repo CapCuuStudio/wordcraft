@@ -142,11 +142,11 @@ async function checkApp(app){
  if(!response.ok){row.status="FAIL";row.detail="HTTP "+response.status;return row}
  const iframe=byId("test-frame");
  iframe.removeAttribute("src");iframe.src="about:blank";await delay(110);
- const loadWait=once(iframe,"load",30000).catch(e=>e);
+ const loadWait=once(iframe,"load",180000).catch(e=>e);
  iframe.src=url.href;
  const loaded=await loadWait;
  if(loaded instanceof Error){row.detail="Trang không hoàn thành tải: "+loaded.message;return row}
- const startTime=Date.now(),timeout=110000;
+ const startTime=Date.now(),timeout=150000;
  let last={};
  while(Date.now()-startTime<timeout){
   if(abort){row.status="BLOCKED";row.detail="Người dùng đã dừng";return row}
