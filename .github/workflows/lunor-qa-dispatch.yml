@@ -1,0 +1,16 @@
+# QA-only entrypoint: does not compile, release, or edit the production app.
+# Must exist on the default branch for "Run workflow" to become available.
+name: LUNOR QA · Chặng 1 (Run manually)
+
+on:
+  push:
+    paths:
+      - '.github/workflows/lunor-qa-dispatch.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qa-stage-1:
+    uses: CapCuuStudio/wordcraft/.github/workflows/lunor-qa-stage-1.yml@feat/lunor-qa-stage-1
