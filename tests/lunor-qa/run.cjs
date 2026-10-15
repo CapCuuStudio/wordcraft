@@ -33,6 +33,7 @@ const check = (name, status, evidence) => info.checks.push({ name, status, evide
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 let browser, context, page, failed = false;
 async function main() {
+  try {
   browser = await chromium.launch({
     headless: true,
     args: ['--enable-webgl','--enable-unsafe-swiftshader','--disable-dev-shm-usage']
