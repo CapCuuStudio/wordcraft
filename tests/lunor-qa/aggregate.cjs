@@ -56,6 +56,6 @@ const rows = [
 ].join('\n');
 fs.writeFileSync(path.join(reportDir, 'LUNOR_QA_REPORT.md'), rows);
 fs.writeFileSync(path.join(reportDir, 'status-summary.json'), JSON.stringify({ timestamp: new Date().toISOString(), total: 12, pass: ok, fail, blocked, apps: data }, null, 2) + '\n');
-if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, report + '\n');
+if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, rows + '\n');
 console.log('LUNOR QA: boot PASS ' + ok + ', FAIL ' + fail + ', BLOCKED ' + blocked);
 process.exitCode = ok === 12 ? 0 : 1;
